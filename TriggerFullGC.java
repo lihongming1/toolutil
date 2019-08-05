@@ -9,6 +9,7 @@ import java.util.List;
 /**
  * 手动触发FullGC
  * 执行了jmap -histo:live pid命令 => 这个会立即触发FullGC
+ * 如果不希望触发fullgc 可以使用jmap -histo pid
  */
 public class TriggerFullGC {
 
