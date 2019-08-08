@@ -1,8 +1,9 @@
-package com.dankegongyu.scm.webapp.controller.quality;
+package com.dkgy.scm.task;
 
 import org.springframework.util.CollectionUtils;
 
 import java.io.*;
+import java.lang.management.ManagementFactory;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -13,18 +14,20 @@ import java.util.List;
  */
 public class TriggerFullGC {
 
-    public static void gcName(String name) {
+    public static void gc() {
         try {
-            String pid = null;
-            Process proc = Runtime.getRuntime().exec("jps");
-            List<String> messages = TriggerFullGC.printMessage(proc.getInputStream());
-            for (String str : messages) {
-                if (str.contains(name)) {
-                    String[] strArr = str.split(" ");
-                    pid = strArr[0];
-                    break;
-                }
-            }
+//            String pid = null;
+//            Process proc = Runtime.getRuntime().exec("jps");
+//            List<String> messages = TriggerFullGC.printMessage(proc.getInputStream());
+//            for (String str : messages) {
+//                if (str.contains(name)) {
+//                    String[] strArr = str.split(" ");
+//                    pid = strArr[0];
+//                    break;
+//                }
+//            }
+            String name = ManagementFactory.getRuntimeMXBean().getName();
+            String pid = name.split("@")[0];
             // GC
             gcPid(pid);
         } catch (Exception ex) {
