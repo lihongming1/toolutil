@@ -35,7 +35,7 @@ public class CmsVsG1GC {
                     // 清理内存
                     list.clear();
                     // 通知gc回收
-                    TriggerFullGC.gcName("JUnitStarter");
+                    TriggerFullGC.gc();
                     // 打印堆内存信息
                     printJvmMemoryInfo();
                 }
