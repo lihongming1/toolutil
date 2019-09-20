@@ -2,6 +2,8 @@ package com.test.mac;
 
 import java.lang.management.ManagementFactory;
 import java.io.*;
+import java.lang.management.MemoryPoolMXBean;
+import java.lang.management.MemoryType;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -19,17 +21,22 @@ public class MethodExecMemory {
      */
     public static void main(String[] args) throws Exception {
         // 获取pid
-        String name = ManagementFactory.getRuntimeMXBean().getName();
-        String pid = name.split("@")[0];
+        // String name = ManagementFactory.getRuntimeMXBean().getName();
+        // String pid = name.split("@")[0];
 
         // 获取内存大小
-        printMemorySize(pid);
+        // printMemorySize(pid);
+        // 查询Eden Space大小
+        printMemoryPoolMXBeans();
 
         // 创建1MB的内存空间，假设执行某个方法，可以发送http请求调用其他方法
         allocateMemory(20 * 1024 * 1024);
+        System.out.println("已分配内存...");
 
         // 获取内存大小
-        printMemorySize(pid);
+        // printMemorySize(pid);
+        // 查询Eden Space大小
+        printMemoryPoolMXBeans();
     }
 
     /**
@@ -44,6 +51,17 @@ public class MethodExecMemory {
             bytes[i] = 0;
         }
         return bytes;
+    }
+
+    /**
+     * 输出内存使用情况
+     */
+    public static void printMemoryPoolMXBeans() {
+        for (MemoryPoolMXBean memoryPoolMXBean : ManagementFactory.getMemoryPoolMXBeans()) {
+            if (memoryPoolMXBean.getName().contains("Eden")) {
+                System.out.println(memoryPoolMXBean.getName() + "   total:" + memoryPoolMXBean.getUsage().getCommitted() / 1024 + "kb" + "   used:" + memoryPoolMXBean.getUsage().getUsed() / 1024 + "kb");
+            }
+        }
     }
 
     /**
