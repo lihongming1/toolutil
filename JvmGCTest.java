@@ -3,12 +3,13 @@ import java.lang.management.MemoryPoolMXBean;
 
 /**
  * 模拟jvm gc 发生，并且观察日志
+ * jdk1.8
  */
 public class JvmGCTest {
 
     public static void main(String[] args) {
 
-        // 触发YoungGC并答应日志
+        // 触发YoungGC并打印日志
         // goYoungGCLog();
 
         /**
@@ -26,6 +27,43 @@ public class JvmGCTest {
 
         // goObjectToOldSpace(4);
 
+        /**
+         * 触发FullGC
+         * 1.Young GC后存活的对象太多，老年代放不下，触发Full GC
+         * 2.触发Young GC之前，老年代的可用空间小于历次Young GC后进入老年代对象的平均大小，就会在Young GC之前，提前触发Full GC
+         * 3.老年代被使用率达到92%的阈值，也会触发Full GC
+         */
+        goFullGCLog(1);
+
+    }
+
+    /**
+     * 触发FullGC并打印日志
+     * -XX:NewSize=10485760
+     * -XX:MaxNewSize=10485760
+     * -XX:InitialHeapSize=20971520
+     * -XX:MaxHeapSize=20971520
+     * -XX:SurvivorRatio=8
+     * -XX:MaxTenuringThreshold=15
+     * -XX:PretenureSizeThreshold=3145728
+     * -XX:+UseParNewGC
+     * -XX:+UseConcMarkSweepGC
+     * -XX:+PrintGCDetails
+     * -XX:+PrintGCTimeStamps
+     * -Xloggc:gc.log
+     */
+    public static void goFullGCLog(int type) {
+        if (1 == type) {
+            byte[] array1 = new byte[4 * 1024 * 1024];
+            array1 = null;
+
+            byte[] array2 = new byte[2 * 1024 * 1024];
+            byte[] array3 = new byte[2 * 1024 * 1024];
+            byte[] array4 = new byte[2 * 1024 * 1024];
+            byte[] array5 = new byte[128 * 1024];
+
+            byte[] array6 = new byte[2 * 1024 * 1024];
+        }
     }
 
     /**
@@ -93,7 +131,7 @@ public class JvmGCTest {
     }
 
     /**
-     * 触发YoungGC并答应日志
+     * 触发YoungGC并打印日志
      * -XX:NewSize=5242880
      * -XX:MaxNewSize=5242880
      * -XX:InitialHeapSize=10485760
