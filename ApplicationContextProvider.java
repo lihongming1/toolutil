@@ -90,4 +90,3 @@ public class ApplicationContextProvider implements ApplicationContextAware {
         return applicationContext.getBean(beanName, clazz);
     }
 }
-
