@@ -16,9 +16,25 @@ public class FundFixedUtil {
     // 当前日期
     public static Date CURRENT_DATE = new Date();
 
+    // 定投基准金额
+    public static int AMOUNT = 500;
+
+    // 定投最高金额倍数
+    public static int NUM = 10;
+
+    // 通货膨胀率
+    public static int RATE = 10;
+
+    // 首次定投实际日期
+    public static String FIRST_DAY = "2021-06-01";
+
+    // 已定投基金份额最新市值
+    public static double LATEST_AMOUNT = 500 + 555.55 + 875.55;
+
     static {
         try {
-            CURRENT_DATE = SDF.parse("2021-06-03");
+            // 当前日期
+            CURRENT_DATE = SDF.parse("2021-06-17");
         } catch (Exception ex) {
             ex.printStackTrace();
         }
@@ -26,12 +42,7 @@ public class FundFixedUtil {
 
     public static void main(String[] args) {
         FundFixedUtil test = new FundFixedUtil();
-        int amount = 500;
-        int num = 10;
-        int rate = 7;
-        String firstDay = "2021-06-01";
-        double latest = 500;
-        test.fund(amount, num, rate, firstDay, latest);
+        test.fund(AMOUNT, NUM, RATE, FIRST_DAY, LATEST_AMOUNT);
     }
 
     /**
@@ -48,7 +59,7 @@ public class FundFixedUtil {
                 return;
             }
             // 定投基准金额
-            BigDecimal amountBig = new BigDecimal("500");
+            BigDecimal amountBig = new BigDecimal(amount);
             // 通货膨胀率
             BigDecimal rateBig = new BigDecimal(rate);
             // 已定投基金份额最新市值
@@ -106,7 +117,7 @@ public class FundFixedUtil {
      */
     public int nper(String firstDay) throws Exception {
         int diff = diffDay(firstDay);
-        int tmp = (diff / 7) == 0 ? 1 : (diff / 7);
+        int tmp = (diff / 7) == 0 ? 1 : (diff / 7) + 1;
         int value = tmp + 1;
         return value;
     }
