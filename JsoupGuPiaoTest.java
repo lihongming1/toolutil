@@ -28,6 +28,9 @@ import java.util.concurrent.TimeUnit;
  * implementation group: 'org.jsoup', name: 'jsoup', version: '1.14.3'
  * implementation group: 'cn.wanghaomiao', name: 'JsoupXpath', version: '2.5.1'
  * implementation group: 'net.sourceforge.htmlunit', name: 'htmlunit', version: '2.33'
+ * <p>
+ * 参考：
+ * https://cuiqingcai.com/8272.html
  */
 public class JsoupGuPiaoTest {
 
@@ -49,7 +52,7 @@ public class JsoupGuPiaoTest {
 
     public static void main(String[] args) throws Exception {
         // 线程池
-        ExecutorService executorService = Executors.newFixedThreadPool(1);
+        ExecutorService executorService = Executors.newFixedThreadPool(2);
         // 获取雪球cookie
         Map<String, String> cookieMap = getXueQiuCookie();
         // 命中一夜持股法的股票编码
@@ -208,12 +211,10 @@ public class JsoupGuPiaoTest {
         LocalDate date = LocalDate.now();
         DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy-MM-dd");
         String dateStr = dtf.format(date);
-        // todo 测试
-        dateStr = "2022-01-28";
         LocalDateTime ldt = LocalDate.parse(dateStr, DateTimeFormatter.ISO_DATE).atStartOfDay();
         //当前时间的毫秒数
-        long times = ldt.toInstant(ZoneOffset.of("+8")).toEpochMilli();
-        String url = "https://stock.xueqiu.com/v5/stock/chart/kline.json?symbol=" + gupiaoCode + "&begin=" + times + "&period=day&indicator=ma";
+        long times = ldt.plusDays(-7).toInstant(ZoneOffset.of("+8")).toEpochMilli();
+        String url = "https://stock.xueqiu.com/v5/stock/chart/kline.json?symbol=" + gupiaoCode + "&begin=" + times + "&period=day&type=before&count=-1&indicator=ma";
         Document document = sendHttp(url, cookieMap);
         String body = document.body().text();
         JSONObject detail = JSONObject.parseObject(body);
@@ -403,6 +404,7 @@ public class JsoupGuPiaoTest {
                 ignoreContentType(true)
                 .ignoreHttpErrors(true)
                 .userAgent(ua)
+                //.proxy("47.95.203.227", 8118)
                 .get();
         return document;
     }
