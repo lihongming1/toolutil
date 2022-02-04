@@ -57,8 +57,17 @@ public class JsoupGuPiaoTest {
 
         String filePath = "/Users/sftc/work/test999/settle-order-adapter/src/main/java/com/tblh/bms/util/gupiao.json";
         JSONArray jsonArray = getAllGuPiaoJSON(filePath, false);
+        List<JSONObject> list = new ArrayList<>();
         for (int i = 0; i < jsonArray.size(); i++) {
             JSONObject item = jsonArray.getJSONObject(i);
+            String stockNumber = item.getString("stock_number");
+            if (stockNumber.startsWith("60")) {
+                list.add(item);
+            }
+        }
+
+        for (int i = 0; i < list.size(); i++) {
+            JSONObject item = list.get(i);
             // 股票代码
             String gupiaoCode = item.getString("stock_id");
             gupiaoCode = gupiaoCode.toUpperCase();
@@ -69,11 +78,12 @@ public class JsoupGuPiaoTest {
             String gupiaoName = item.getString("stock_name");
             String finalGupiaoCode = gupiaoCode;
             int finali = i;
+            int finals = list.size();
             executorService.execute(new Runnable() {
                 @Override
                 public void run() {
                     try {
-                        System.out.println(finali + "\t" + Thread.currentThread().getId() + "\t" + finalGupiaoCode + "\t" + gupiaoName + "\t" + "执行中...");
+                        System.out.println(finals + "\t" + finali + "\t" + Thread.currentThread().getId() + "\t" + finalGupiaoCode + "\t" + gupiaoName + "\t" + "执行中...");
                         boolean hit = yiyechigu(finalGupiaoCode, cookieMap);
                         if (hit) {
                             hitList.add(finalGupiaoCode);
@@ -258,8 +268,10 @@ public class JsoupGuPiaoTest {
         BigDecimal volumeRatio = quote.getBigDecimal("volume_ratio");
         // 流通市值
         BigDecimal floatMarketCapital = quote.getBigDecimal("float_market_capital");
-        // 科学计算法转普通计算法
-        floatMarketCapital = new BigDecimal(floatMarketCapital.toPlainString());
+        if (floatMarketCapital != null) {
+            // 科学计算法转普通计算法
+            floatMarketCapital = new BigDecimal(floatMarketCapital.toPlainString());
+        }
         // 股票详情
         XueQiuGuPiaoDetail xueQiuGuPiaoDetail = new XueQiuGuPiaoDetail();
         xueQiuGuPiaoDetail.setCurrent(current);
@@ -372,14 +384,6 @@ public class JsoupGuPiaoTest {
         fileOutputStream.close();
         bufferedInputStream.close();
         System.out.println("获取全部股票代码，结束。。。");
-    }
-
-    /**
-     * 将Long类型的时间戳转换成String 类型的时间格式，时间格式为：yyyy-MM-dd HH:mm:ss
-     */
-    public static String convertTimeToString(Long time) {
-        DateTimeFormatter ftf = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-        return ftf.format(LocalDateTime.ofInstant(Instant.ofEpochMilli(time), ZoneId.systemDefault()));
     }
 
     /**
