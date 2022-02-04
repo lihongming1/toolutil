@@ -17,10 +17,7 @@ import java.io.FileOutputStream;
 import java.math.BigDecimal;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -34,9 +31,25 @@ import java.util.concurrent.TimeUnit;
  */
 public class JsoupGuPiaoTest {
 
+    public static final String[] UA = {"Mozilla/5.0 (Windows NT 6.1; WOW64; rv:46.0) Gecko/20100101 Firefox/46.0",
+            "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.87 Safari/537.36 OPR/37.0.2178.32",
+            "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/534.57.2 (KHTML, like Gecko) Version/5.1.7 Safari/534.57.2",
+            "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/45.0.2454.101 Safari/537.36",
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/46.0.2486.0 Safari/537.36 Edge/13.10586",
+            "Mozilla/5.0 (Windows NT 10.0; WOW64; Trident/7.0; rv:11.0) like Gecko",
+            "Mozilla/5.0 (compatible; MSIE 10.0; Windows NT 6.1; WOW64; Trident/6.0)",
+            "Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 6.1; WOW64; Trident/5.0)",
+            "Mozilla/4.0 (compatible; MSIE 8.0; Windows NT 6.1; WOW64; Trident/4.0)",
+            "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 BIDUBrowser/8.3 Safari/537.36",
+            "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.80 Safari/537.36 Core/1.47.277.400 QQBrowser/9.4.7658.400",
+            "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/48.0.2564.116 UBrowser/5.6.12150.8 Safari/537.36",
+            "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/38.0.2125.122 Safari/537.36 SE 2.X MetaSr 1.0",
+            "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/48.0.2564.116 Safari/537.36 TheWorld 7",
+            "Mozilla/5.0 (Windows NT 6.1; W…) Gecko/20100101 Firefox/60.0"};
+
     public static void main(String[] args) throws Exception {
         // 线程池
-        ExecutorService executorService = Executors.newFixedThreadPool(4);
+        ExecutorService executorService = Executors.newFixedThreadPool(1);
         // 获取雪球cookie
         Map<String, String> cookieMap = getXueQiuCookie();
         // 命中一夜持股法的股票编码
@@ -191,8 +204,7 @@ public class JsoupGuPiaoTest {
         //当前时间的毫秒数
         long times = ldt.toInstant(ZoneOffset.of("+8")).toEpochMilli();
         String url = "https://stock.xueqiu.com/v5/stock/chart/kline.json?symbol=" + gupiaoCode + "&begin=" + times + "&period=day&indicator=ma";
-        Document document = Jsoup.connect(url).cookies(cookieMap).ignoreContentType(true)
-                .ignoreHttpErrors(true).get();
+        Document document = sendHttp(url, cookieMap);
         String body = document.body().text();
         JSONObject detail = JSONObject.parseObject(body);
         JSONArray itemArray = detail.getJSONObject("data").getJSONArray("item");
@@ -224,8 +236,8 @@ public class JsoupGuPiaoTest {
      */
     public static XueQiuGuPiaoDetail getXueQiuGuPiaoDetail(String gupiaoCode, Map<String, String> cookieMap) throws Exception {
         String url = "https://stock.xueqiu.com/v5/stock/quote.json?symbol=" + gupiaoCode + "&extend=detail";
-        Document document = Jsoup.connect(url).cookies(cookieMap).ignoreContentType(true)
-                .ignoreHttpErrors(true).get();
+        Document document = sendHttp(url, cookieMap);
+
         String body = document.body().text();
         JSONObject detail = JSONObject.parseObject(body);
         if (detail == null) {
@@ -268,8 +280,7 @@ public class JsoupGuPiaoTest {
      */
     public static JSONObject getXueQiuFenShiPrice(String gupiaoCode, Map<String, String> cookieMap) throws Exception {
         String url = "https://stock.xueqiu.com/v5/stock/chart/minute.json?symbol=" + gupiaoCode + "&period=1d";
-        Document document = Jsoup.connect(url).cookies(cookieMap).ignoreContentType(true)
-                .ignoreHttpErrors(true).get();
+        Document document = sendHttp(url, cookieMap);
         String body = document.body().text();
         JSONObject bodyJsonObject = JSONObject.parseObject(body);
         return bodyJsonObject;
@@ -369,6 +380,27 @@ public class JsoupGuPiaoTest {
     public static String convertTimeToString(Long time) {
         DateTimeFormatter ftf = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         return ftf.format(LocalDateTime.ofInstant(Instant.ofEpochMilli(time), ZoneId.systemDefault()));
+    }
+
+    /**
+     * 发送http请求
+     *
+     * @param url
+     * @param cookieMap
+     * @return
+     * @throws Exception
+     */
+    public static Document sendHttp(String url, Map<String, String> cookieMap) throws Exception {
+        Random r = new Random();
+        int i = r.nextInt(14);
+        String ua = new String(UA[i]);
+        Document document = Jsoup.connect(url).
+                cookies(cookieMap).
+                ignoreContentType(true)
+                .ignoreHttpErrors(true)
+                .userAgent(ua)
+                .get();
+        return document;
     }
 
     /**
