@@ -64,6 +64,8 @@ public class JsoupGuPiaoTest {
         ExecutorService executorService = Executors.newFixedThreadPool(8);
         // 命中一夜持股法的股票编码
         List<String> hitList = new ArrayList<>();
+        // 初始化cookie
+        COOKIE_MAPPING.put("COOKIE", getXueQiuCookie());
 
         String filePath = "/Users/sftc/work/test999/settle-order-adapter/src/main/java/com/tblh/bms/util/gupiao.json";
         JSONArray jsonArray = getAllGuPiaoJSON(filePath, false);
@@ -92,11 +94,7 @@ public class JsoupGuPiaoTest {
                     try {
                         System.out.println(finals + "\t" + finali + "\t" + Thread.currentThread().getId() + "\t" + finalGupiaoCode + "\t" + gupiaoName + "\t" + "执行中...");
                         Map<String, String> cookieMap = COOKIE_MAPPING.get("COOKIE");
-                        if (MapUtils.isEmpty(cookieMap)) {
-                            cookieMap = getXueQiuCookie();
-                            COOKIE_MAPPING.put("COOKIE", cookieMap);
-                            System.out.println("初始化生成cookie, " + JSON.toJSONString(cookieMap));
-                        } else {
+                        if (!MapUtils.isEmpty(cookieMap)) {
                             int current = count.get();
                             if (current == 1000 || current == 2000 || current == 3000 || current == 4000 || current == 5000) {
                                 cookieMap = getXueQiuCookie();
@@ -426,7 +424,7 @@ public class JsoupGuPiaoTest {
                 ignoreContentType(true)
                 .ignoreHttpErrors(true)
                 .userAgent(ua)
-                //.proxy("119.5.180.112", 8080)
+                //.proxy("221.216.138.178", 9000)
                 .get();
         return document;
     }
