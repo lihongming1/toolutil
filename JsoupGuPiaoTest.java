@@ -5,6 +5,7 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import lombok.Data;
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.collections.MapUtils;
 import org.apache.commons.io.FileUtils;
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
@@ -18,9 +19,11 @@ import java.math.BigDecimal;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * 一夜持股法
@@ -50,11 +53,15 @@ public class JsoupGuPiaoTest {
             "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/48.0.2564.116 Safari/537.36 TheWorld 7",
             "Mozilla/5.0 (Windows NT 6.1; W…) Gecko/20100101 Firefox/60.0"};
 
+    // 统计线程执行个数
+    public static AtomicInteger count = new AtomicInteger(0);
+
+    // 多线程中使用的cookie集合
+    public static ConcurrentHashMap<String, Map<String, String>> COOKIE_MAPPING = new ConcurrentHashMap<String, Map<String, String>>();
+
     public static void main(String[] args) throws Exception {
         // 线程池
-        ExecutorService executorService = Executors.newFixedThreadPool(2);
-        // 获取雪球cookie
-        Map<String, String> cookieMap = getXueQiuCookie();
+        ExecutorService executorService = Executors.newFixedThreadPool(8);
         // 命中一夜持股法的股票编码
         List<String> hitList = new ArrayList<>();
 
@@ -63,8 +70,8 @@ public class JsoupGuPiaoTest {
         List<JSONObject> list = new ArrayList<>();
         for (int i = 0; i < jsonArray.size(); i++) {
             JSONObject item = jsonArray.getJSONObject(i);
-            String stockNumber = item.getString("stock_number");
-            if (stockNumber.startsWith("60")) {
+            String stockId = item.getString("stock_id");
+            if (stockId.startsWith("sh") || stockId.startsWith("sz")) {
                 list.add(item);
             }
         }
@@ -74,9 +81,6 @@ public class JsoupGuPiaoTest {
             // 股票代码
             String gupiaoCode = item.getString("stock_id");
             gupiaoCode = gupiaoCode.toUpperCase();
-            if (gupiaoCode.contains("HK")) {
-                continue;
-            }
             // 股票名称
             String gupiaoName = item.getString("stock_name");
             String finalGupiaoCode = gupiaoCode;
@@ -87,12 +91,28 @@ public class JsoupGuPiaoTest {
                 public void run() {
                     try {
                         System.out.println(finals + "\t" + finali + "\t" + Thread.currentThread().getId() + "\t" + finalGupiaoCode + "\t" + gupiaoName + "\t" + "执行中...");
+                        Map<String, String> cookieMap = COOKIE_MAPPING.get("COOKIE");
+                        if (MapUtils.isEmpty(cookieMap)) {
+                            cookieMap = getXueQiuCookie();
+                            COOKIE_MAPPING.put("COOKIE", cookieMap);
+                            System.out.println("初始化生成cookie, " + JSON.toJSONString(cookieMap));
+                        } else {
+                            int current = count.get();
+                            if (current == 1000 || current == 2000 || current == 3000 || current == 4000 || current == 5000) {
+                                cookieMap = getXueQiuCookie();
+                                COOKIE_MAPPING.put("COOKIE", cookieMap);
+                                System.out.println("重新生成cookie, " + JSON.toJSONString(cookieMap));
+                            }
+                        }
                         boolean hit = yiyechigu(finalGupiaoCode, cookieMap);
                         if (hit) {
                             hitList.add(finalGupiaoCode);
                         }
                     } catch (Exception ex) {
                         ex.printStackTrace();
+                    } finally {
+                        // 这行线程数+1
+                        count.getAndIncrement();
                     }
                 }
             });
@@ -160,6 +180,8 @@ public class JsoupGuPiaoTest {
                     BigDecimal floatMarketCapital = xueQiuGuPiaoDetail.getFloatMarketCapital();
                     // 流通市值50亿-200亿
                     if (floatMarketCapital != null && floatMarketCapital.compareTo(new BigDecimal("5000000000")) >= 0 && floatMarketCapital.compareTo(new BigDecimal("20000000000")) <= 0) {
+                        // todo
+                        result = true;
                         // 分时数据
                         JSONObject fenshiPrice = getXueQiuFenShiPrice(gupiaoCode, cookieMap);
                         JSONArray items = fenshiPrice.getJSONObject("data").getJSONArray("items");
@@ -404,7 +426,7 @@ public class JsoupGuPiaoTest {
                 ignoreContentType(true)
                 .ignoreHttpErrors(true)
                 .userAgent(ua)
-                //.proxy("47.95.203.227", 8118)
+                //.proxy("119.5.180.112", 8080)
                 .get();
         return document;
     }
